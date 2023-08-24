@@ -34,32 +34,38 @@ from fastapi.responses import HTMLResponse
 app = FastAPI()
 templates = Jinja2Templates(directory="templates")
 
-
-class User(BaseModel):
-    id: int
+class UserInput(BaseModel):
     name: str
     email: str
     password: str
 
+
+class User(UserInput):
+    id: int
+    
+
 users = []
+for i in range(5):
+    users.append(User(id= i, name=f'User_{i}', email=f'email#{i}@gb.ru', password=f'23{i}'))
+
+@app.get("/", response_class=HTMLResponse)
+async def read_root(request: Request):
+    return templates.TemplateResponse('base.html', {'request': request})
+
 
 @app.get("/users", response_class=HTMLResponse)
 async def get_users(request: Request):
     return templates.TemplateResponse('users.html', {'request': request, 'users': users})
 
 @app.post("/user/", response_model=User)
-async def add_user(item: User):
+async def add_user(item: UserInput):
     id = len(users) + 1
-    user = User
-    user.id = id
-    user.name = item.name
-    user.email = item.email
-    user.password = item.password
+    user = User(id = id, name = item.name, email = item.email, password = item.password)
     users.append(user)
     return user
 
 @app.put("/user/{id}", response_model=User)
-async def update_user(id: int, new_user: User):
+async def update_user(id: int, new_user: UserInput):
     for user in users:
         if user.id == id:
             user.name = new_user.name
